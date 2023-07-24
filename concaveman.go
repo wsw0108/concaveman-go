@@ -51,7 +51,7 @@ type qnode struct {
 // impl tinyqueue.Item
 func (a qnode) Less(b tinyqueue.Item) bool {
 	// compareDist(a, b)
-	return a.dist < b.(qnode).dist
+	return a.dist < b.(*qnode).dist
 }
 
 func Concaveman(points []Point, opts ...Options) []Point {
@@ -197,6 +197,8 @@ func findCandidate(tree *rbush.RBush, a, b, c, d Point, maxDist float64, segTree
 		if item != nil {
 			qn := item.(*qnode)
 			node = qn.node.(*rbush.TreeNode)
+		} else {
+			node = nil
 		}
 	}
 

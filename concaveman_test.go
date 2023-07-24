@@ -47,12 +47,29 @@ func TestMain(m *testing.M) {
 }
 
 func TestConcaveHull(t *testing.T) {
+	points := []concaveman.Point{
+		{0, 0},
+		{2, 0},
+		{1, 2},
+		{1, 1},
+	}
+	result := concaveman.Concaveman(points)
+	expected := []concaveman.Point{
+		{2, 0},
+		{0, 0},
+		{1, 2},
+		{1, 1},
+		{2, 0},
+	}
+	if !reflect.DeepEqual(result, expected) {
+		t.Error("TestConcaveHull")
+	}
 }
 
 func TestDefaultConcaveHull(t *testing.T) {
 	result := concaveman.Concaveman(g_points)
 	if !reflect.DeepEqual(result, g_hull) {
-		t.Fail()
+		t.Error("TestDefaultConcaveHull")
 	}
 }
 
@@ -63,6 +80,6 @@ func TestTunedConcaveHull(t *testing.T) {
 	}
 	result := concaveman.Concaveman(g_points, opt)
 	if !reflect.DeepEqual(result, g_hull2) {
-		t.Fail()
+		t.Error("TestTunedConcaveHull")
 	}
 }
