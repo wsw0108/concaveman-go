@@ -1,4 +1,4 @@
-module github.com/wsw0108/concaveman
+module github.com/wsw0108/concaveman-go
 
 go 1.19
 

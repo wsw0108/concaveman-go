@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wsw0108/concaveman/predicates"
+	"github.com/wsw0108/concaveman-go/predicates"
 )
 
 func TestOrient2D(t *testing.T) {

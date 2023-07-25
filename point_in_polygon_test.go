@@ -3,7 +3,7 @@ package concaveman_test
 import (
 	"testing"
 
-	"github.com/wsw0108/concaveman"
+	"github.com/wsw0108/concaveman-go"
 )
 
 func TestPointInPolygon(t *testing.T) {

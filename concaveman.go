@@ -5,8 +5,8 @@ import (
 	"sort"
 
 	"github.com/tidwall/tinyqueue"
-	"github.com/wsw0108/concaveman/predicates"
-	"github.com/wsw0108/concaveman/rbush"
+	"github.com/wsw0108/concaveman-go/predicates"
+	"github.com/wsw0108/concaveman-go/rbush"
 )
 
 type Options struct {

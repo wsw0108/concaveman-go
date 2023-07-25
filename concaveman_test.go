@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/wsw0108/concaveman"
+	"github.com/wsw0108/concaveman-go"
 )
 
 var (
