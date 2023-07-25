@@ -1,4 +1,4 @@
-package concaveman_test
+package predicates_test
 
 import (
 	"bufio"
@@ -8,24 +8,24 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wsw0108/concaveman"
+	"github.com/wsw0108/concaveman/predicates"
 )
 
 func TestOrient2D(t *testing.T) {
 	{
-		v := concaveman.Orient2D(0, 0, 1, 1, 0, 1)
+		v := predicates.Orient2D(0, 0, 1, 1, 0, 1)
 		if v >= 0 {
 			t.Error("clockwise")
 		}
 	}
 	{
-		v := concaveman.Orient2D(0, 0, 0, 1, 1, 1)
+		v := predicates.Orient2D(0, 0, 0, 1, 1, 1)
 		if v <= 0 {
 			t.Error("counterclockwise")
 		}
 	}
 	{
-		v := concaveman.Orient2D(0, 0, 0.5, 0.5, 1, 1)
+		v := predicates.Orient2D(0, 0, 0.5, 0.5, 1, 1)
 		if v != 0 {
 			t.Error("collinear")
 		}
@@ -70,7 +70,7 @@ func TestOrient2D(t *testing.T) {
 			cx, _ := strconv.ParseFloat(parts[5], 64)
 			cy, _ := strconv.ParseFloat(parts[6], 64)
 			sign, _ := strconv.ParseInt(parts[7], 10, 32)
-			result := concaveman.Orient2D(ax, ay, bx, by, cx, cy)
+			result := predicates.Orient2D(ax, ay, bx, by, cx, cy)
 			if math.Signbit(result) != (sign > 0) {
 				t.Errorf("%s: %f vs %d\n", line, result, -sign)
 			}

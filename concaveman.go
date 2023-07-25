@@ -4,9 +4,9 @@ import (
 	"math"
 	"sort"
 
-	"github.com/tidwall/rbush"
-	"github.com/tidwall/rtree"
 	"github.com/tidwall/tinyqueue"
+	"github.com/wsw0108/concaveman/predicates"
+	"github.com/wsw0108/concaveman/rbush"
 )
 
 type Options struct {
@@ -25,16 +25,16 @@ type node struct {
 }
 
 // impl rbush.Item
-func (p Point) Rect() (min, max []float64) {
-	min = p[:]
-	max = p[:]
+func (p Point) Rect() (min, max [2]float64) {
+	min = p
+	max = p
 	return
 }
 
 // impl rbush.Item
-func (n node) Rect() (min, max []float64) {
-	min = []float64{n.minX, n.minY}
-	max = []float64{n.maxX, n.maxY}
+func (n node) Rect() (min, max [2]float64) {
+	min = [2]float64{n.minX, n.minY}
+	max = [2]float64{n.maxX, n.maxY}
 	return
 }
 
@@ -72,10 +72,12 @@ func Concaveman(points []Point, opts ...Options) []Point {
 	hull := fastConvexHull(points)
 
 	// index the points with an R-tree
-	tree := rbush.New(2)
+	tree := rbush.New(16)
+	items := make([]rbush.Item, 0, len(points))
 	for _, p := range points {
-		tree.Insert(p)
+		items = append(items, p)
 	}
+	tree.Load(items)
 
 	// turn the convex hull into a linked list and populate the initial edge queue with the nodes
 	queue := make([]*node, 0, len(hull))
@@ -87,10 +89,12 @@ func Concaveman(points []Point, opts ...Options) []Point {
 	}
 
 	// index the segments with an R-tree (for intersection checks)
-	segTree := &rtree.RTreeG[*node]{}
+	// segTree := &rtree.RTreeG[*node]{}
+	segTree := rbush.New(16)
 	for _, n := range queue {
 		updateBBox(n)
-		segTree.Insert([2]float64{n.minX, n.minY}, [2]float64{n.maxX, n.maxY}, n)
+		// segTree.Insert([2]float64{n.minX, n.minY}, [2]float64{n.maxX, n.maxY}, n)
+		segTree.Insert(n)
 	}
 
 	sqConcavity := concavity * concavity
@@ -122,11 +126,14 @@ func Concaveman(points []Point, opts ...Options) []Point {
 
 			// update point and segment indexes
 			tree.Remove(p)
-			segTree.Delete([2]float64{node.minX, node.minY}, [2]float64{node.maxX, node.maxY}, node)
+			// segTree.Delete([2]float64{node.minX, node.minY}, [2]float64{node.maxX, node.maxY}, node)
+			segTree.Remove(node)
 			n1 := updateBBox(node)
 			n2 := updateBBox(node.next)
-			segTree.Insert([2]float64{n1.minX, n1.minY}, [2]float64{n1.maxX, n1.maxY}, n1)
-			segTree.Insert([2]float64{n2.minX, n2.minY}, [2]float64{n2.maxX, n2.maxY}, n2)
+			// segTree.Insert([2]float64{n1.minX, n1.minY}, [2]float64{n1.maxX, n1.maxY}, n1)
+			// segTree.Insert([2]float64{n2.minX, n2.minY}, [2]float64{n2.maxX, n2.maxY}, n2)
+			segTree.Insert(n1)
+			segTree.Insert(n2)
 		}
 	}
 
@@ -146,7 +153,8 @@ func Concaveman(points []Point, opts ...Options) []Point {
 	return concave
 }
 
-func findCandidate(tree *rbush.RBush, a, b, c, d Point, maxDist float64, segTree *rtree.RTreeG[*node]) (Point, bool) {
+// func findCandidate(tree *rbush.RBush, a, b, c, d Point, maxDist float64, segTree *rtree.RTreeG[*node]) (Point, bool) {
+func findCandidate(tree *rbush.RBush, a, b, c, d Point, maxDist float64, segTree *rbush.RBush) (Point, bool) {
 	queue := tinyqueue.New(nil)
 	node := tree.Data
 
@@ -239,17 +247,32 @@ func inside(a Point, bbox *rbush.TreeNode) bool {
 }
 
 // check if the edge (a,b) doesn't intersect any other edges
-func noIntersections(a, b Point, segTree *rtree.RTreeG[*node]) bool {
+// func noIntersections(a, b Point, segTree *rtree.RTreeG[*node]) bool {
+func noIntersections(a, b Point, segTree *rbush.RBush) bool {
 	minX := math.Min(a[0], b[0])
 	minY := math.Min(a[1], b[1])
 	maxX := math.Max(a[0], b[0])
 	maxY := math.Max(a[1], b[1])
 
 	var edges []*node
-	segTree.Search([2]float64{minX, minY}, [2]float64{maxX, maxY}, func(_, _ [2]float64, data *node) bool {
-		edges = append(edges, data)
+
+	// segTree.Search([2]float64{minX, minY}, [2]float64{maxX, maxY}, func(_, _ [2]float64, data *node) bool {
+	// 	edges = append(edges, data)
+	// 	return true
+	// })
+
+	s := node{
+		minX: minX,
+		minY: minY,
+		maxX: maxX,
+		maxY: maxY,
+	}
+	segTree.Search(s, func(item rbush.Item) bool {
+		edge := item.(*node)
+		edges = append(edges, edge)
 		return true
 	})
+
 	for _, edge := range edges {
 		if intersects(edge.p, edge.next.p, a, b) {
 			return false
@@ -259,7 +282,7 @@ func noIntersections(a, b Point, segTree *rtree.RTreeG[*node]) bool {
 }
 
 func cross(p1, p2, p3 Point) float64 {
-	return Orient2D(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1])
+	return predicates.Orient2D(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1])
 }
 
 // check if the edges (p1,q1) and (p2,q2) intersect

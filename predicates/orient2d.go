@@ -1,4 +1,4 @@
-package concaveman
+package predicates
 
 import "math"
 
